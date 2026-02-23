@@ -71,13 +71,32 @@ def seed_db():
         db.refresh(village)
         
         # Add a water data reading for each
-        # Let's make Jaisalmer, Latur, and Anantapur highly stressed
-        if v_data["name"] in ["Jaisalmer", "Latur", "Anantapur"]:
-            rain_dev = -80.0 # Heavy deficit
-            gw_level = 55.0  # Deep
-        else:
-            rain_dev = random.uniform(-10.0, 10.0)
-            gw_level = random.uniform(10.0, 20.0)
+        # Fetch REAL historical rainfall data from Open-Meteo (past 3 months)
+        import requests
+        from datetime import datetime, timedelta
+        
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+        
+        try:
+            url = f"https://archive-api.open-meteo.com/v1/archive?latitude={v_data['latitude']}&longitude={v_data['longitude']}&start_date={start_date}&end_date={end_date}&daily=precipitation_sum&timezone=auto"
+            response = requests.get(url)
+            weather_data = response.json()
+            
+            # Calculate total rainfall in last 90 days vs an assumed healthy average of ~150mm for this period
+            total_rain = sum([rain for rain in weather_data['daily']['precipitation_sum'] if rain is not None])
+            
+            # If rain is incredibly low (e.g. < 20mm in 3 months), it's a severe deficit
+            rain_dev = total_rain - 150.0 
+            
+            # Groundwater is harder to get free live APIs for, so we derive it inversely from the real rain deficit
+            # If there is a massive rain deficit, the groundwater is likely depleting rapidly.
+            gw_level = 15.0 + max(0, (-rain_dev * 0.2))
+
+        except Exception as e:
+            print(f"API Error fetching data for {v_data['name']}: {e}")
+            rain_dev = 0.0
+            gw_level = 15.0
             
         rain_stress = max(0, -rain_dev * 0.05) 
         gw_stress = max(0, gw_level * 0.1)
