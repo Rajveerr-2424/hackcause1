@@ -80,3 +80,42 @@ def get_crisis_dashboard(threshold: float = 6.0, db: Session = Depends(get_db)):
     dashboard_data.sort(key=lambda x: x["priority_score"], reverse=True)
     return dashboard_data
 
+@app.get("/tankers/available")
+def get_available_tankers(db: Session = Depends(get_db)):
+    """Returns the count of currently available water tankers."""
+    count = db.query(models.Tanker).filter(models.Tanker.is_available == True).count()
+    return {"available": count}
+
+@app.get("/tankers/fleet")
+def get_tanker_fleet(db: Session = Depends(get_db)):
+    """Returns all tankers with their availability and state info (derived from license plate)."""
+    state_map = {
+        "MH": "Maharashtra", "MP": "Madhya Pradesh", "RJ": "Rajasthan",
+        "GJ": "Gujarat", "KA": "Karnataka", "UP": "Uttar Pradesh",
+        "DL": "Delhi", "TN": "Tamil Nadu", "AP": "Andhra Pradesh",
+        "TS": "Telangana", "KL": "Kerala", "WB": "West Bengal",
+        "RJ": "Rajasthan", "HR": "Haryana", "PB": "Punjab",
+    }
+    tankers = db.query(models.Tanker).all()
+    fleet = []
+    for t in tankers:
+        prefix = t.license_plate.split("-")[0]
+        state = state_map.get(prefix, prefix)
+        fleet.append({
+            "license_plate": t.license_plate,
+            "state": state,
+            "capacity_liters": t.capacity_liters,
+            "is_available": t.is_available,
+            "lat": t.current_latitude,
+            "lng": t.current_longitude,
+        })
+    return fleet
+
+@app.post("/dispatch-tanker/{village_id}")
+def dispatch_tanker_to_village(village_id: int, db: Session = Depends(get_db)):
+    """Simulates dispatching an available tanker to a critical village."""
+    result = crud.dispatch_tanker(db, village_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
