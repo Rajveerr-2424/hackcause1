@@ -41,6 +41,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('critical');
   const [selectedVillage, setSelectedVillage] = useState(null);
+  const [availableTankers, setAvailableTankers] = useState(0);
 
   // Default India Center
   const defaultCenter = [22.5937, 78.9629];
@@ -49,12 +50,28 @@ function App() {
     // Fetch data from FastAPI backend
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/crisis-dashboard/?threshold=0.0');
-        setDashboardData(response.data);
+        const [dashRes, tankerRes] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/crisis-dashboard/?threshold=0.0'),
+          axios.get('http://127.0.0.1:8000/tankers/available')
+        ]);
+        setDashboardData(dashRes.data);
+        setAvailableTankers(tankerRes.data.available);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const handleDispatch = async (villageId) => {
+      try {
+        await axios.post(`http://127.0.0.1:8000/dispatch-tanker/${villageId}`);
+        // Refresh data rapidly
+        const tankerRes = await axios.get('http://127.0.0.1:8000/tankers/available');
+        setAvailableTankers(tankerRes.data.available);
+        alert('Tanker Dispatched Successfully to ' + selectedVillage.village_name + '!');
+      } catch (error) {
+        alert(error.response?.data?.detail || 'No tankers available!');
       }
     };
 
@@ -186,7 +203,7 @@ function App() {
                 <Truck className="text-blue-400" size={20} />
                 <div>
                   <p className="text-xs text-slate-400 font-semibold uppercase">Tankers Deployable</p>
-                  <p className="text-lg font-bold text-white leading-none">3</p>
+                  <p className="text-lg font-bold text-white leading-none">{availableTankers}</p>
                 </div>
               </div>
             </div>
@@ -330,6 +347,7 @@ function App() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => handleDispatch(selectedVillage.village_id)}
                     className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 shadow-[0_0_20px_rgba(239,68,68,0.3)] text-white font-bold py-4 rounded-xl text-lg relative overflow-hidden group"
                   >
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
