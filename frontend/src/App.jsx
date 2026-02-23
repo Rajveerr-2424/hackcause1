@@ -53,8 +53,8 @@ function App() {
     const fetchData = async () => {
       try {
         const [dashRes, tankerRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/crisis-dashboard/?threshold=0.0'),
-          axios.get('http://127.0.0.1:8000/tankers/available')
+          axios.get('http://127.0.0.1:8001/crisis-dashboard/?threshold=0.0'),
+          axios.get('http://127.0.0.1:8001/tankers/available')
         ]);
         setDashboardData(dashRes.data);
         setAvailableTankers(tankerRes.data.available);
@@ -72,8 +72,8 @@ function App() {
 
   const handleDispatch = async (villageId) => {
     try {
-      const res = await axios.post(`http://127.0.0.1:8000/dispatch-tanker/${villageId}`);
-      const tankerRes = await axios.get('http://127.0.0.1:8000/tankers/available');
+      const res = await axios.post(`http://127.0.0.1:8001/dispatch-tanker/${villageId}`);
+      const tankerRes = await axios.get('http://127.0.0.1:8001/tankers/available');
       setAvailableTankers(tankerRes.data.available);
       alert(`✅ ${res.data.message}`);
     } catch (error) {
@@ -83,7 +83,7 @@ function App() {
 
   const openFleetModal = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/tankers/fleet');
+      const res = await axios.get('http://127.0.0.1:8001/tankers/fleet');
       setFleetData(res.data);
       setShowFleetModal(true);
     } catch (e) {
