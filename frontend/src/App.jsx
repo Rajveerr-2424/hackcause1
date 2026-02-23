@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaf
 import { motion, AnimatePresence } from 'framer-motion';
 import { Droplet, AlertTriangle, Truck, MapPin, Activity, CheckCircle2, ChevronRight, X } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import axios from 'axios';
+import { api } from './api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
 
 // Leaflet icon fix for React
@@ -64,8 +64,8 @@ function App() {
     const fetchData = async () => {
       try {
         const [dashRes, tankerRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8001/crisis-dashboard/?threshold=0.0'),
-          axios.get('http://127.0.0.1:8001/tankers/available')
+          api.get('/crisis-dashboard/?threshold=0.0'),
+          api.get('/tankers/available')
         ]);
         setDashboardData(dashRes.data);
         setAvailableTankers(tankerRes.data.available);
@@ -88,8 +88,8 @@ function App() {
 
   const handleDispatch = async (villageId) => {
     try {
-      const res = await axios.post(`http://127.0.0.1:8001/dispatch-tanker/${villageId}`);
-      const tankerRes = await axios.get('http://127.0.0.1:8001/tankers/available');
+      const res = await api.post(`/dispatch-tanker/${villageId}`);
+      const tankerRes = await api.get('/tankers/available');
       setAvailableTankers(tankerRes.data.available);
       showToast(`✅ ${res.data.message}`, 'success');
     } catch (error) {
@@ -99,7 +99,7 @@ function App() {
 
   const openFleetModal = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8001/tankers/fleet');
+      const res = await api.get('/tankers/fleet');
       setFleetData(res.data);
       setShowFleetModal(true);
     } catch (e) {
@@ -327,7 +327,7 @@ function App() {
                       // Fetch real rainfall data from Open-Meteo via backend
                       setRainfallData([]);
                       setRainfallLoading(true);
-                      axios.get(`http://127.0.0.1:8001/city-rainfall/${village.village_id}`)
+                      api.get(`/city-rainfall/${village.village_id}`)
                         .then(res => setRainfallData(res.data.data))
                         .catch(() => setRainfallData([]))
                         .finally(() => setRainfallLoading(false));

@@ -68,7 +68,7 @@ You need two separate terminal windows open to run this application: one for the
 1. Open a terminal.
 2. Navigate into the backend folder:
    ```bash
-   cd hack-acause/drought-warning-system/backend
+   cd /workspace/hackcause1/backend
    ```
 3. Activate the Python virtual environment:
    ```bash
@@ -85,10 +85,33 @@ You need two separate terminal windows open to run this application: one for the
 1. Open a **second, new terminal window**.
 2. Navigate into the frontend folder:
    ```bash
-   cd hack-acause/drought-warning-system/frontend
+   cd /workspace/hackcause1/frontend
    ```
-3. Start the Vite development server:
+3. Configure the frontend API URL:
+   ```bash
+   cp .env.example .env
+   ```
+   The default `.env.example` points to `http://127.0.0.1:8000` for direct local API usage.
+   You can also keep `VITE_API_BASE_URL=/api` when using the built-in Vite proxy.
+4. Start the Vite development server:
    ```bash
    npm run dev
    ```
 *(The UI will open in your browser at http://localhost:5173/)*
+
+
+---
+
+## ☁️ Deploying on Vercel
+
+This repo is now configured for a single Vercel project that serves both:
+- **Frontend static app** (built from `frontend/`)
+- **Backend FastAPI** as a Python serverless function at `/api` (`api/index.py`)
+
+### Deploy steps
+1. Import this repo into Vercel.
+2. Keep the root directory as repository root.
+3. Vercel will use `vercel.json` to build frontend + backend.
+4. After deploy, frontend API calls will automatically use same-origin `/api`.
+
+No extra rewrite setup is required.
