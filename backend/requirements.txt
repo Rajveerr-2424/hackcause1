@@ -1,0 +1,10 @@
+fastapi[standard]
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+pydantic-settings
+pandas
+numpy
+python-dotenv
+alembic

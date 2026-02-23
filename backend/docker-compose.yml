@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    container_name: drought_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: drought_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - drought_db_data:/var/lib/postgresql/data
+
+volumes:
+  drought_db_data:
