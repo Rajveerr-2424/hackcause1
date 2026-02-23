@@ -112,10 +112,28 @@ def seed_db():
         db.commit()
 
     # Add some tankers
+    # Add a geographically spread tanker fleet across India
     tankers = [
+        # Maharashtra (Near Pune/Mumbai)
         {"license_plate": "MH-12-AB-1234", "capacity_liters": 10000, "is_available": True, "current_latitude": 18.5204, "current_longitude": 73.8567},
-        {"license_plate": "MH-12-XY-9876", "capacity_liters": 15000, "is_available": True, "current_latitude": 18.6000, "current_longitude": 73.7000},
-        {"license_plate": "MH-14-GH-5555", "capacity_liters": 8000, "is_available": False, "current_latitude": 18.9102, "current_longitude": 73.3283},
+        {"license_plate": "MH-12-XY-9876", "capacity_liters": 15000, "is_available": True, "current_latitude": 19.0760, "current_longitude": 72.8777},
+        {"license_plate": "MH-14-GH-5555", "capacity_liters": 8000,  "is_available": True, "current_latitude": 18.9102, "current_longitude": 73.3283},
+        # Madhya Pradesh (Near Bhopal/Indore)
+        {"license_plate": "MP-09-AA-0001", "capacity_liters": 10000, "is_available": True, "current_latitude": 23.2599, "current_longitude": 77.4126},
+        {"license_plate": "MP-09-BB-0002", "capacity_liters": 12000, "is_available": True, "current_latitude": 22.7196, "current_longitude": 75.8577},
+        # Rajasthan (Near Jaipur)
+        {"license_plate": "RJ-14-CC-1111", "capacity_liters": 10000, "is_available": True, "current_latitude": 26.9124, "current_longitude": 75.7873},
+        {"license_plate": "RJ-14-DD-2222", "capacity_liters": 15000, "is_available": True, "current_latitude": 26.2389, "current_longitude": 73.0243},
+        # Gujarat (Near Ahmedabad)
+        {"license_plate": "GJ-01-EE-3333", "capacity_liters": 10000, "is_available": True, "current_latitude": 23.0225, "current_longitude": 72.5714},
+        # Karnataka (Near Bengaluru)
+        {"license_plate": "KA-01-FF-4444", "capacity_liters": 10000, "is_available": True, "current_latitude": 12.9716, "current_longitude": 77.5946},
+        # Uttar Pradesh (Near Lucknow)
+        {"license_plate": "UP-32-GG-5555", "capacity_liters": 12000, "is_available": True, "current_latitude": 26.8467, "current_longitude": 80.9462},
+        # Delhi
+        {"license_plate": "DL-01-HH-6666", "capacity_liters": 8000,  "is_available": True, "current_latitude": 28.7041, "current_longitude": 77.1025},
+        # Tamil Nadu (Near Chennai)
+        {"license_plate": "TN-01-II-7777", "capacity_liters": 10000, "is_available": True, "current_latitude": 13.0827, "current_longitude": 80.2707},
     ]
     for t_data in tankers:
         tanker = models.Tanker(**t_data)
