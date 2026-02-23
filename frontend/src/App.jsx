@@ -63,22 +63,22 @@ function App() {
       }
     };
 
-    const handleDispatch = async (villageId) => {
-      try {
-        await axios.post(`http://127.0.0.1:8000/dispatch-tanker/${villageId}`);
-        // Refresh data rapidly
-        const tankerRes = await axios.get('http://127.0.0.1:8000/tankers/available');
-        setAvailableTankers(tankerRes.data.available);
-        alert('Tanker Dispatched Successfully to ' + selectedVillage.village_name + '!');
-      } catch (error) {
-        alert(error.response?.data?.detail || 'No tankers available!');
-      }
-    };
-
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleDispatch = async (villageId) => {
+    try {
+      await axios.post(`http://127.0.0.1:8000/dispatch-tanker/${villageId}`);
+      // Refresh data rapidly
+      const tankerRes = await axios.get('http://127.0.0.1:8000/tankers/available');
+      setAvailableTankers(tankerRes.data.available);
+      alert('Tanker Dispatched Successfully to ' + selectedVillage.village_name + '!');
+    } catch (error) {
+      alert(error.response?.data?.detail || 'No tankers available!');
+    }
+  };
 
   const getMarkerColor = (stress) => {
     if (stress >= 8.0) return '#ef4444'; // Red - Critical
