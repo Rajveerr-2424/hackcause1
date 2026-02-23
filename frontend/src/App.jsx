@@ -169,31 +169,28 @@ function App() {
           />
 
           {dashboardData.map((village) => (
-            <>
-              {/* Ripple ring behind critical markers */}
+            <CircleMarker
+              key={village.village_id}
+              center={[village.location.lat, village.location.lng]}
+              radius={village.stress_index >= 8.0 ? 16 : village.stress_index >= 5.0 ? 10 : 6}
+              fillColor={getMarkerColor(village.stress_index)}
+              fillOpacity={village.stress_index >= 8.0 ? 0.4 : 0.6}
+              color={getMarkerColor(village.stress_index)}
+              weight={village.stress_index >= 8.0 ? 2 : 1}
+              className={`${village.stress_index >= 8.0 ? 'animate-pulse' : ''} cursor-pointer`}
+              eventHandlers={{ click: () => setSelectedVillage(village) }}
+            >
               {village.stress_index >= 8.0 && (
                 <CircleMarker
-                  key={`ring-${village.village_id}`}
                   center={[village.location.lat, village.location.lng]}
-                  radius={22}
+                  radius={4}
                   fillColor="#ef4444"
-                  fillOpacity={0}
-                  color="#ef4444"
+                  fillOpacity={1}
+                  color="#ffffff"
                   weight={2}
-                  className="ripple-ring"
                 />
               )}
-              <CircleMarker
-                key={village.village_id}
-                center={[village.location.lat, village.location.lng]}
-                radius={village.stress_index >= 8.0 ? 16 : village.stress_index >= 5.0 ? 10 : 6}
-                fillColor={getMarkerColor(village.stress_index)}
-                fillOpacity={village.stress_index >= 8.0 ? 0.4 : 0.6}
-                color={getMarkerColor(village.stress_index)}
-                weight={village.stress_index >= 8.0 ? 2 : 1}
-                eventHandlers={{ click: () => setSelectedVillage(village) }}
-              />
-            </>
+            </CircleMarker>
           ))}
         </MapContainer>
       </div>
@@ -202,7 +199,7 @@ function App() {
       <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
 
         {/* Bottom Scrolling Carousel for Cities */}
-        <div className="w-full pointer-events-auto bg-gradient-to-t from-slate-900/95 via-slate-900/60 to-transparent pb-6 pt-8 px-8 backdrop-blur-sm">
+        <div className="w-full pointer-events-auto pb-6 pt-10 px-8" style={{ background: 'linear-gradient(to top, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.85) 35%, rgba(15,23,42,0.4) 65%, transparent 100%)', backdropFilter: 'blur(2px)' }}>
 
           {/* Tabs & Stats Header inside the bottom tray */}
           <div className="flex justify-between items-end mb-6">
@@ -464,8 +461,8 @@ function App() {
       {/* Toast Notification */}
       {toast && (
         <div className={`toast-enter fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-semibold max-w-sm ${toast.type === 'success'
-            ? 'bg-emerald-900/90 border-emerald-500/40 text-emerald-200'
-            : 'bg-red-900/90 border-red-500/40 text-red-200'
+          ? 'bg-emerald-900/90 border-emerald-500/40 text-emerald-200'
+          : 'bg-red-900/90 border-red-500/40 text-red-200'
           }`}>
           <span>{toast.msg}</span>
           <button onClick={() => setToast(null)} className="ml-auto text-white/40 hover:text-white transition"><X size={16} /></button>
