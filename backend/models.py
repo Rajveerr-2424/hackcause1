@@ -28,6 +28,7 @@ class WaterData(Base):
     
     # Computed
     stress_index = Column(Float) # 0.0 to 10.0 (Higher is worse)
+    predicted_stress_index = Column(Float, nullable=True) # 30-day forecast based on trend
     
     village = relationship("Village", back_populates="water_data")
 

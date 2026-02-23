@@ -61,6 +61,9 @@ def get_crisis_dashboard(threshold: float = 6.0, db: Session = Depends(get_db)):
     
     dashboard_data = []
     for village, w_data in results:
+        # Triage Algorithm: Priority = Stress Index * Population scale factor
+        triage_score = min(100.0, round(w_data.stress_index * (1 + (village.population / 100000)), 2))
+        
         dashboard_data.append({
             "village_id": village.id,
             "village_name": village.name,
@@ -68,7 +71,12 @@ def get_crisis_dashboard(threshold: float = 6.0, db: Session = Depends(get_db)):
             "population": village.population,
             "location": {"lat": village.latitude, "lng": village.longitude},
             "stress_index": w_data.stress_index,
+            "predicted_stress_index": w_data.predicted_stress_index,
+            "priority_score": triage_score,
             "last_recorded": w_data.record_date
         })
+        
+    # Sort strictly by triage priority score rather than basic stress
+    dashboard_data.sort(key=lambda x: x["priority_score"], reverse=True)
     return dashboard_data
 

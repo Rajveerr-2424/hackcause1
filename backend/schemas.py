@@ -32,6 +32,7 @@ class WaterDataResponse(WaterDataBase):
     village_id: int
     record_date: datetime.datetime
     stress_index: float
+    predicted_stress_index: Optional[float]
 
     class Config:
         from_attributes = True

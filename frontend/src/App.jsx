@@ -223,7 +223,7 @@ function App() {
                           {village.village_name}
                         </h3>
                         <p className="text-slate-400 text-xs font-semibold tracking-wider flex items-center gap-1 mt-1">
-                          <MapPin size={12} /> {village.district} District
+                          <MapPin size={12} /> {village.district} • Priority: {village.priority_score?.toFixed(1)}
                         </p>
                       </div>
                       <div className={`text-2xl font-black tabular-nums tracking-tighter ${isCritical ? 'text-red-400' : village.stress_index >= 5.0 ? 'text-amber-400' : 'text-emerald-400'
@@ -283,7 +283,7 @@ function App() {
 
               <h2 className="text-3xl font-black text-white">{selectedVillage.village_name}</h2>
               <p className="text-slate-400 font-medium tracking-wide mt-1 flex items-center gap-2">
-                <MapPin size={14} /> {selectedVillage.district}, Maharashtra
+                <MapPin size={14} /> {selectedVillage.district} District
               </p>
             </div>
 
@@ -301,11 +301,27 @@ function App() {
                 </div>
               </div>
 
+              <div className="bg-black/20 rounded-2xl p-5 border border-white/5 relative overflow-hidden">
+                <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-2">30-Day Forecast</p>
+                <div className="flex items-center gap-3">
+                  <span className={`text-3xl font-black ${selectedVillage.predicted_stress_index > selectedVillage.stress_index ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {selectedVillage.predicted_stress_index?.toFixed(1) || "N/A"}
+                  </span>
+                  <span className="text-sm font-medium text-slate-500">
+                    {selectedVillage.predicted_stress_index > selectedVillage.stress_index ? "📈 Worsening" : "📉 Improving"}
+                  </span>
+                </div>
+              </div>
+
               <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
-                <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-4">Demographics</p>
+                <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-4">Triage & Demographics</p>
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-slate-300">Total Population</span>
                   <strong className="text-white bg-white/10 px-3 py-1 rounded-lg">{selectedVillage.population.toLocaleString()}</strong>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-300">Triage Priority Score</span>
+                  <strong className="text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg">{selectedVillage.priority_score?.toFixed(1) || "N/A"} / 100</strong>
                 </div>
               </div>
 
