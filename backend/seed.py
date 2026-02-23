@@ -6,18 +6,23 @@ import random
 def seed_db():
     db = SessionLocal()
     
-    # Check if we already have data
+    # Check if we already have data, if so, clear it for a fresh seed
     if db.query(models.Village).first():
-        print("Database already seeded.")
-        db.close()
-        return
+        print("Clearing old local database records...")
+        db.query(models.WaterData).delete()
+        db.query(models.Tanker).delete()
+        db.query(models.Village).delete()
+        db.commit()
 
     villages_data = [
-        {"name": "Rampur", "district": "Pune", "population": 4500, "latitude": 18.5204, "longitude": 73.8567},
-        {"name": "Shivapur", "district": "Pune", "population": 2100, "latitude": 18.3323, "longitude": 73.8687},
-        {"name": "Khalapur", "district": "Raigad", "population": 6200, "latitude": 18.8267, "longitude": 73.2844},
-        {"name": "Karjat", "district": "Raigad", "population": 3800, "latitude": 18.9102, "longitude": 73.3283},
-        {"name": "Lonavala (Rural)", "district": "Pune", "population": 1500, "latitude": 18.7516, "longitude": 73.4039},
+        {"name": "Jaisalmer", "district": "Rajasthan", "population": 65000, "latitude": 26.9157, "longitude": 70.9083},
+        {"name": "Bikaner", "district": "Rajasthan", "population": 82000, "latitude": 28.0229, "longitude": 73.3119},
+        {"name": "Anantapur", "district": "Andhra Pradesh", "population": 45000, "latitude": 14.6819, "longitude": 77.6006},
+        {"name": "Madurai", "district": "Tamil Nadu", "population": 98000, "latitude": 9.9252, "longitude": 78.1198},
+        {"name": "Gaya", "district": "Bihar", "population": 55000, "latitude": 24.7964, "longitude": 84.9914},
+        {"name": "Latur", "district": "Maharashtra", "population": 72000, "latitude": 18.4088, "longitude": 76.5604},
+        {"name": "Bhopal", "district": "Madhya Pradesh", "population": 115000, "latitude": 23.2599, "longitude": 77.4126},
+        {"name": "Kutch", "district": "Gujarat", "population": 34000, "latitude": 23.7337, "longitude": 69.8597}
     ]
 
     for v_data in villages_data:
@@ -27,8 +32,8 @@ def seed_db():
         db.refresh(village)
         
         # Add a water data reading for each
-        # Let's make Rampur and Karjat highly stressed
-        if v_data["name"] in ["Rampur", "Karjat"]:
+        # Let's make Jaisalmer, Latur, and Anantapur highly stressed
+        if v_data["name"] in ["Jaisalmer", "Latur", "Anantapur"]:
             rain_dev = -80.0 # Heavy deficit
             gw_level = 55.0  # Deep
         else:

@@ -42,8 +42,8 @@ function App() {
   const [activeTab, setActiveTab] = useState('critical');
   const [selectedVillage, setSelectedVillage] = useState(null);
 
-  // Default Pune Region
-  const defaultCenter = [18.65, 73.65];
+  // Default India Center
+  const defaultCenter = [22.5937, 78.9629];
 
   useEffect(() => {
     // Fetch data from FastAPI backend
@@ -80,7 +80,8 @@ function App() {
     ? [selectedVillage.location.lat, selectedVillage.location.lng]
     : defaultCenter;
 
-  const mapZoom = selectedVillage ? 14 : 10;
+  // Zoom out to 5 for national view by default
+  const mapZoom = selectedVillage ? 14 : 5;
 
   return (
     <div className="flex h-screen w-full bg-[#0f172a] font-sans overflow-hidden">
@@ -96,7 +97,7 @@ function App() {
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-md">Drought Engine AI</h1>
-          <p className="text-blue-200 text-xs font-semibold tracking-widest uppercase mt-0.5">District Command Center</p>
+          <p className="text-blue-200 text-xs font-semibold tracking-widest uppercase mt-0.5">National Command Center</p>
         </div>
       </motion.div>
 
@@ -104,7 +105,7 @@ function App() {
       <div className="absolute inset-0 z-0 h-screen w-full">
         <MapContainer
           center={defaultCenter}
-          zoom={10}
+          zoom={5}
           zoomControl={false}
           style={{ height: "100vh", width: "100%" }}
           className="w-full h-full"
@@ -123,9 +124,9 @@ function App() {
             <CircleMarker
               key={village.village_id}
               center={[village.location.lat, village.location.lng]}
-              radius={village.stress_index >= 8.0 ? 30 : village.stress_index >= 5.0 ? 15 : 8}
+              radius={village.stress_index >= 8.0 ? 16 : village.stress_index >= 5.0 ? 10 : 6}
               fillColor={getMarkerColor(village.stress_index)}
-              fillOpacity={village.stress_index >= 8.0 ? 0.2 : 0.4}
+              fillOpacity={village.stress_index >= 8.0 ? 0.4 : 0.6}
               color={getMarkerColor(village.stress_index)}
               weight={village.stress_index >= 8.0 ? 2 : 1}
               className={`${village.stress_index >= 8.0 ? 'animate-pulse' : ''} cursor-pointer`}
@@ -136,7 +137,7 @@ function App() {
               {village.stress_index >= 8.0 && (
                 <CircleMarker
                   center={[village.location.lat, village.location.lng]}
-                  radius={6}
+                  radius={4}
                   fillColor="#ef4444"
                   fillOpacity={1}
                   color="#ffffff"
