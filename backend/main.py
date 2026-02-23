@@ -119,3 +119,46 @@ def dispatch_tanker_to_village(village_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["message"])
     return result
 
+@app.get("/city-rainfall/{village_id}")
+def get_city_rainfall(village_id: int, db: Session = Depends(get_db)):
+    """Fetches real weekly rainfall data from Open-Meteo for a specific village."""
+    import requests
+    from datetime import date, timedelta
+
+    village = db.query(models.Village).filter(models.Village.id == village_id).first()
+    if not village:
+        raise HTTPException(status_code=404, detail="Village not found")
+
+    end_date = date.today()
+    start_date = end_date - timedelta(days=83)  # 12 weeks
+
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": village.latitude,
+        "longitude": village.longitude,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "daily": "precipitation_sum",
+        "timezone": "Asia/Kolkata"
+    }
+
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        data = resp.json()
+        daily_rain = data.get("daily", {}).get("precipitation_sum", [])
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not fetch rainfall data")
+
+    # Aggregate into weekly buckets
+    weeks = []
+    for i in range(0, min(84, len(daily_rain)), 7):
+        chunk = daily_rain[i:i+7]
+        total = round(sum(v for v in chunk if v is not None), 1)
+        weeks.append({"week": f"W{i//7 + 1}", "actual": total, "forecast": None})
+
+    # 4-week forward forecast (linear decay from last known value)
+    last_val = weeks[-1]["actual"] if weeks else 0
+    for j in range(1, 5):
+        weeks.append({"week": f"F{j}", "actual": None, "forecast": round(max(0, last_val * max(0.05, 1 - j * 0.25)), 1)})
+
+    return {"village": village.name, "data": weeks}

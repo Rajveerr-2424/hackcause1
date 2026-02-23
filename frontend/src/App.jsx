@@ -47,6 +47,8 @@ function App() {
   const [fleetData, setFleetData] = useState([]);
   const [toast, setToast] = useState(null);
   const [splashDone, setSplashDone] = useState(false);
+  const [rainfallData, setRainfallData] = useState([]);
+  const [rainfallLoading, setRainfallLoading] = useState(false);
 
   // Default India Center
   const defaultCenter = [22.5937, 78.9629];
@@ -320,7 +322,16 @@ function App() {
                     exit={{ opacity: 0, width: 0 }}
                     whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedVillage(village)}
+                    onClick={() => {
+                      setSelectedVillage(village);
+                      // Fetch real rainfall data from Open-Meteo via backend
+                      setRainfallData([]);
+                      setRainfallLoading(true);
+                      axios.get(`http://127.0.0.1:8001/city-rainfall/${village.village_id}`)
+                        .then(res => setRainfallData(res.data.data))
+                        .catch(() => setRainfallData([]))
+                        .finally(() => setRainfallLoading(false));
+                    }}
                     className={`min-w-[320px] min-h-[200px] shrink-0 snap-center cursor-pointer rounded-2xl p-6 border backdrop-blur-xl transition-all duration-300 
                           ${isSelected ? (isCritical ? 'border-red-500 border-2 bg-red-950/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]' : 'border-blue-500 border-2 bg-blue-900/40') : 'border-white/10 bg-white/5 hover:bg-white/10'}
                         `}
@@ -415,43 +426,32 @@ function App() {
               <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
                 <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-1">Rainfall Trend — Last 12 Weeks</p>
                 <p className="text-slate-500 text-xs mb-3">Actual <span className="text-slate-400">──</span> &nbsp; Forecast <span className="text-slate-500">- - -</span></p>
-                <ResponsiveContainer width="100%" height={130}>
-                  <AreaChart
-                    data={(() => {
-                      const baseRain = Math.max(0, 18 + (selectedVillage.rainfall_deviation_mm || 0) * 0.08);
-                      const weeks = [];
-                      for (let i = 0; i < 15; i++) {
-                        const isForecast = i >= 12;
-                        const decay = i < 6 ? 1 : Math.max(0.05, 1 - (i - 5) * 0.18);
-                        const noise = isForecast ? 0 : (Math.random() * 4 - 2);
-                        weeks.push({
-                          week: i < 12 ? `W${i + 1}` : `F${i - 11}`,
-                          actual: !isForecast ? Math.max(0, +(baseRain * decay + noise).toFixed(1)) : null,
-                          forecast: isForecast ? Math.max(0, +(baseRain * Math.max(0.02, decay - 0.05)).toFixed(1)) : null,
-                        });
-                      }
-                      return weeks;
-                    })()}
-                    margin={{ top: 4, right: 4, bottom: 0, left: -28 }}
-                  >
-                    <defs>
-                      <linearGradient id="rainGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="week" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
-                      labelStyle={{ color: '#94a3b8' }}
-                      formatter={(val, name) => [`${val} mm`, name === 'actual' ? 'Rainfall' : 'Forecast']}
-                    />
-                    <ReferenceLine x="W12" stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
-                    <Area type="monotone" dataKey="actual" stroke={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} strokeWidth={2} fill="url(#rainGrad)" dot={false} connectNulls={false} />
-                    <Area type="monotone" dataKey="forecast" stroke={selectedVillage.stress_index >= 8 ? '#fca5a5' : '#93c5fd'} strokeWidth={2} strokeDasharray="5 4" fill="none" dot={false} connectNulls={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {rainfallLoading ? (
+                  <div className="h-[130px] flex items-center justify-center text-slate-500 text-sm">
+                    <span className="animate-pulse">Fetching live satellite data…</span>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={130}>
+                    <AreaChart data={rainfallData} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
+                      <defs>
+                        <linearGradient id="rainGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="week" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                        labelStyle={{ color: '#94a3b8' }}
+                        formatter={(val, name) => [`${val} mm`, name === 'actual' ? 'Rainfall' : 'Forecast']}
+                      />
+                      <ReferenceLine x="W12" stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+                      <Area type="monotone" dataKey="actual" stroke={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} strokeWidth={2} fill="url(#rainGrad)" dot={false} connectNulls={false} />
+                      <Area type="monotone" dataKey="forecast" stroke={selectedVillage.stress_index >= 8 ? '#fca5a5' : '#93c5fd'} strokeWidth={2} strokeDasharray="5 4" fill="none" dot={false} connectNulls={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-slate-500 text-xs">30-Day Forecast</span>
                   <span className={`text-sm font-black ${selectedVillage.predicted_stress_index > selectedVillage.stress_index ? 'text-red-400' : 'text-emerald-400'}`}>
