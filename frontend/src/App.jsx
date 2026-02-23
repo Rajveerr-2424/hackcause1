@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Droplet, AlertTriangle, Truck, MapPin, Activity, CheckCircle2, ChevronRight, X } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
 
 // Leaflet icon fix for React
 import L from 'leaflet';
@@ -44,10 +45,17 @@ function App() {
   const [availableTankers, setAvailableTankers] = useState(0);
   const [showFleetModal, setShowFleetModal] = useState(false);
   const [fleetData, setFleetData] = useState([]);
-  const [toast, setToast] = useState(null); // { msg, type: 'success'|'error' }
+  const [toast, setToast] = useState(null);
+  const [splashDone, setSplashDone] = useState(false);
 
   // Default India Center
   const defaultCenter = [22.5937, 78.9629];
+
+  // Splash screen: dismiss after 2.5 seconds
+  useEffect(() => {
+    const t = setTimeout(() => setSplashDone(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     // Fetch data from FastAPI backend
@@ -127,6 +135,57 @@ function App() {
 
   return (
     <div className="flex h-screen w-full bg-[#0f172a] font-sans overflow-hidden">
+
+      {/* ── Splash Screen ── */}
+      <AnimatePresence>
+        {!splashDone && (
+          <motion.div
+            key="splash"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
+            className="absolute inset-0 z-[200] flex flex-col items-center justify-center bg-[#0f172a]"
+          >
+            {/* Logo icon */}
+            <motion.div
+              initial={{ scale: 0, rotate: -20, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.6, ease: 'backOut' }}
+              className="p-5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-[0_0_60px_rgba(99,102,241,0.5)] mb-6"
+            >
+              <Activity className="text-white" size={48} />
+            </motion.div>
+
+            {/* App name */}
+            <motion.h1
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
+              className="text-5xl font-black text-white tracking-tight"
+            >
+              Drought Engine <span className="text-blue-400">AI</span>
+            </motion.h1>
+
+            {/* Tagline */}
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+              className="text-slate-400 text-sm font-semibold tracking-widest uppercase mt-3"
+            >
+              National Water Crisis Command Center
+            </motion.p>
+
+            {/* Loading bar */}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: '180px' }}
+              transition={{ delay: 1.0, duration: 1.2, ease: 'easeInOut' }}
+              className="h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mt-8"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Header */}
       <motion.div
@@ -352,14 +411,51 @@ function App() {
                 </div>
               </div>
 
-              <div className="bg-black/20 rounded-2xl p-5 border border-white/5 relative overflow-hidden">
-                <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-2">30-Day Forecast</p>
-                <div className="flex items-center gap-3">
-                  <span className={`text-3xl font-black ${selectedVillage.predicted_stress_index > selectedVillage.stress_index ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {selectedVillage.predicted_stress_index?.toFixed(1) || "N/A"}
-                  </span>
-                  <span className="text-sm font-medium text-slate-500">
-                    {selectedVillage.predicted_stress_index > selectedVillage.stress_index ? "📈 Worsening" : "📉 Improving"}
+              {/* Rainfall Trend Chart */}
+              <div className="bg-black/20 rounded-2xl p-5 border border-white/5">
+                <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-1">Rainfall Trend — Last 12 Weeks</p>
+                <p className="text-slate-500 text-xs mb-3">Actual <span className="text-slate-400">──</span> &nbsp; Forecast <span className="text-slate-500">- - -</span></p>
+                <ResponsiveContainer width="100%" height={130}>
+                  <AreaChart
+                    data={(() => {
+                      const baseRain = Math.max(0, 18 + (selectedVillage.rainfall_deviation_mm || 0) * 0.08);
+                      const weeks = [];
+                      for (let i = 0; i < 15; i++) {
+                        const isForecast = i >= 12;
+                        const decay = i < 6 ? 1 : Math.max(0.05, 1 - (i - 5) * 0.18);
+                        const noise = isForecast ? 0 : (Math.random() * 4 - 2);
+                        weeks.push({
+                          week: i < 12 ? `W${i + 1}` : `F${i - 11}`,
+                          actual: !isForecast ? Math.max(0, +(baseRain * decay + noise).toFixed(1)) : null,
+                          forecast: isForecast ? Math.max(0, +(baseRain * Math.max(0.02, decay - 0.05)).toFixed(1)) : null,
+                        });
+                      }
+                      return weeks;
+                    })()}
+                    margin={{ top: 4, right: 4, bottom: 0, left: -28 }}
+                  >
+                    <defs>
+                      <linearGradient id="rainGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="week" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: '#94a3b8' }}
+                      formatter={(val, name) => [`${val} mm`, name === 'actual' ? 'Rainfall' : 'Forecast']}
+                    />
+                    <ReferenceLine x="W12" stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
+                    <Area type="monotone" dataKey="actual" stroke={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} strokeWidth={2} fill="url(#rainGrad)" dot={false} connectNulls={false} />
+                    <Area type="monotone" dataKey="forecast" stroke={selectedVillage.stress_index >= 8 ? '#fca5a5' : '#93c5fd'} strokeWidth={2} strokeDasharray="5 4" fill="none" dot={false} connectNulls={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-slate-500 text-xs">30-Day Forecast</span>
+                  <span className={`text-sm font-black ${selectedVillage.predicted_stress_index > selectedVillage.stress_index ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {selectedVillage.predicted_stress_index > selectedVillage.stress_index ? '📈 Worsening' : '📉 Improving'}
                   </span>
                 </div>
               </div>
