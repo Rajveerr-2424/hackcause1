@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-import models
+from backend.database import SessionLocal, engine
+from backend import models
 import random
 
 def seed_db():
