@@ -79,35 +79,37 @@ def seed_db():
         db.refresh(village)
         
         # Add a water data reading for each
-        # Fetch REAL historical rainfall data from Open-Meteo (past 3 months)
+        # Fetch REAL historical rainfall data from Open-Meteo (past 12 months)
+        # Using annual comparison vs 90-day to correctly handle dry winter season
         import requests
         from datetime import datetime, timedelta
-        
+
         end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
-        
+        start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+
         try:
             url = f"https://archive-api.open-meteo.com/v1/archive?latitude={v_data['latitude']}&longitude={v_data['longitude']}&start_date={start_date}&end_date={end_date}&daily=precipitation_sum&timezone=auto"
             response = requests.get(url)
             weather_data = response.json()
-            
-            # Calculate total rainfall in last 90 days vs an assumed healthy average of ~150mm for this period
-            total_rain = sum([rain for rain in weather_data['daily']['precipitation_sum'] if rain is not None])
-            
-            # If rain is incredibly low (e.g. < 20mm in 3 months), it's a severe deficit
-            rain_dev = total_rain - 150.0 
-            
-            # Groundwater is harder to get free live APIs for, so we derive it inversely from the real rain deficit
-            # If there is a massive rain deficit, the groundwater is likely depleting rapidly.
-            gw_level = 15.0 + max(0, (-rain_dev * 0.2))
+
+            # Annual total rainfall vs India's average annual rainfall (~800mm)
+            # Wet cities (Cherrapunji=11000mm, Goa=2900mm) → low stress (GREEN)
+            # Dry cities (Jaipur=350mm, Delhi=800mm) → high stress (RED/AMBER)
+            total_rain = sum([r for r in weather_data['daily']['precipitation_sum'] if r is not None])
+            india_annual_avg = 800.0
+            rain_dev = total_rain - india_annual_avg
+
+            # Groundwater deplets inversely with rain deficit
+            gw_level = 15.0 + max(0, (-rain_dev * 0.005))
 
         except Exception as e:
-            print(f"API Error fetching data for {v_data['name']}: {e}")
+            print(f"API Error for {v_data['name']}: {e}")
             rain_dev = 0.0
             gw_level = 15.0
-            
-        rain_stress = max(0, -rain_dev * 0.05) 
-        gw_stress = max(0, gw_level * 0.1)
+
+        # Stress formula: negative deviation → high stress, positive → low
+        rain_stress = max(0, min(8.0, -rain_dev * 0.008))
+        gw_stress = max(0, min(2.0, gw_level * 0.1))
         total_stress = min(10.0, round(rain_stress + gw_stress, 2))
         
         water_data = models.WaterData(
