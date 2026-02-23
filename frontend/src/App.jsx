@@ -44,6 +44,7 @@ function App() {
   const [availableTankers, setAvailableTankers] = useState(0);
   const [showFleetModal, setShowFleetModal] = useState(false);
   const [fleetData, setFleetData] = useState([]);
+  const [toast, setToast] = useState(null); // { msg, type: 'success'|'error' }
 
   // Default India Center
   const defaultCenter = [22.5937, 78.9629];
@@ -70,14 +71,19 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const handleDispatch = async (villageId) => {
     try {
       const res = await axios.post(`http://127.0.0.1:8001/dispatch-tanker/${villageId}`);
       const tankerRes = await axios.get('http://127.0.0.1:8001/tankers/available');
       setAvailableTankers(tankerRes.data.available);
-      alert(`✅ ${res.data.message}`);
+      showToast(`✅ ${res.data.message}`, 'success');
     } catch (error) {
-      alert(`⚠️ ${error.response?.data?.detail || 'No tankers available within range!'}`);
+      showToast(`⚠️ ${error.response?.data?.detail || 'No tankers available within range!'}`, 'error');
     }
   };
 
@@ -126,13 +132,19 @@ function App() {
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="absolute top-6 left-6 z-30 flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/20 p-3 pr-6 rounded-2xl shadow-2xl"
+        className="absolute top-6 left-6 z-30 flex items-center gap-4 bg-slate-800/90 backdrop-blur-md border border-slate-600/50 p-3 pr-6 rounded-2xl shadow-2xl" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0)', backgroundSize: '18px 18px' }}
       >
         <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
           <Activity className="text-white" size={24} />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-md">Drought Engine AI</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-md">Drought Engine AI</h1>
+            <span className="flex items-center gap-1 bg-red-500/20 border border-red-500/40 rounded-full px-2 py-0.5 text-xs font-bold text-red-400">
+              <span className="live-dot w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+              LIVE
+            </span>
+          </div>
           <p className="text-blue-200 text-xs font-semibold tracking-widest uppercase mt-0.5">National Command Center</p>
         </div>
       </motion.div>
@@ -157,30 +169,31 @@ function App() {
           />
 
           {dashboardData.map((village) => (
-            <CircleMarker
-              key={village.village_id}
-              center={[village.location.lat, village.location.lng]}
-              radius={village.stress_index >= 8.0 ? 16 : village.stress_index >= 5.0 ? 10 : 6}
-              fillColor={getMarkerColor(village.stress_index)}
-              fillOpacity={village.stress_index >= 8.0 ? 0.4 : 0.6}
-              color={getMarkerColor(village.stress_index)}
-              weight={village.stress_index >= 8.0 ? 2 : 1}
-              className={`${village.stress_index >= 8.0 ? 'animate-pulse' : ''} cursor-pointer`}
-              eventHandlers={{
-                click: () => setSelectedVillage(village)
-              }}
-            >
+            <>
+              {/* Ripple ring behind critical markers */}
               {village.stress_index >= 8.0 && (
                 <CircleMarker
+                  key={`ring-${village.village_id}`}
                   center={[village.location.lat, village.location.lng]}
-                  radius={4}
+                  radius={22}
                   fillColor="#ef4444"
-                  fillOpacity={1}
-                  color="#ffffff"
+                  fillOpacity={0}
+                  color="#ef4444"
                   weight={2}
+                  className="ripple-ring"
                 />
               )}
-            </CircleMarker>
+              <CircleMarker
+                key={village.village_id}
+                center={[village.location.lat, village.location.lng]}
+                radius={village.stress_index >= 8.0 ? 16 : village.stress_index >= 5.0 ? 10 : 6}
+                fillColor={getMarkerColor(village.stress_index)}
+                fillOpacity={village.stress_index >= 8.0 ? 0.4 : 0.6}
+                color={getMarkerColor(village.stress_index)}
+                weight={village.stress_index >= 8.0 ? 2 : 1}
+                eventHandlers={{ click: () => setSelectedVillage(village) }}
+              />
+            </>
           ))}
         </MapContainer>
       </div>
@@ -189,7 +202,7 @@ function App() {
       <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
 
         {/* Bottom Scrolling Carousel for Cities */}
-        <div className="w-full pointer-events-auto bg-gradient-to-t from-slate-900/95 via-slate-900/80 to-transparent pb-6 pt-24 px-8 backdrop-blur-sm">
+        <div className="w-full pointer-events-auto bg-gradient-to-t from-slate-900/95 via-slate-900/60 to-transparent pb-6 pt-8 px-8 backdrop-blur-sm">
 
           {/* Tabs & Stats Header inside the bottom tray */}
           <div className="flex justify-between items-end mb-6">
@@ -212,8 +225,8 @@ function App() {
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3 backdrop-blur-md">
                 <AlertTriangle className="text-red-400" size={20} />
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Critical</p>
-                  <p className="text-lg font-bold text-white leading-none">
+                  <p className="text-xs text-white font-semibold uppercase">Critical</p>
+                  <p className="text-lg font-black text-white leading-none">
                     {dashboardData.filter(v => v.stress_index >= 8.0).length}
                   </p>
                 </div>
@@ -224,8 +237,8 @@ function App() {
               >
                 <Truck className="text-blue-400" size={20} />
                 <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Tankers Deployable</p>
-                  <p className="text-lg font-bold text-white leading-none">{availableTankers}</p>
+                  <p className="text-xs text-white font-semibold uppercase">Tankers Deployable</p>
+                  <p className="text-lg font-black text-white leading-none">{availableTankers}</p>
                 </div>
               </div>
             </div>
@@ -252,7 +265,7 @@ function App() {
                     whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedVillage(village)}
-                    className={`min-w-[320px] shrink-0 snap-center cursor-pointer rounded-2xl p-5 border backdrop-blur-xl transition-all duration-300 
+                    className={`min-w-[320px] min-h-[200px] shrink-0 snap-center cursor-pointer rounded-2xl p-6 border backdrop-blur-xl transition-all duration-300 
                           ${isSelected ? (isCritical ? 'border-red-500 border-2 bg-red-950/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]' : 'border-blue-500 border-2 bg-blue-900/40') : 'border-white/10 bg-white/5 hover:bg-white/10'}
                         `}
                   >
@@ -334,8 +347,10 @@ function App() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full translate-x-10 -translate-y-10" />
                 )}
                 <p className="text-slate-400 text-xs font-bold tracking-widest uppercase mb-2">AI Stress Evaluation</p>
-                <div className="flex items-end gap-2 text-white">
-                  <span className="text-6xl font-black tracking-tighter leading-none">{selectedVillage.stress_index.toFixed(1)}</span>
+                <div className="flex items-end gap-2">
+                  <span className={`text-6xl font-black tracking-tighter leading-none ${selectedVillage.stress_index >= 8.0 ? 'text-red-400' :
+                    selectedVillage.stress_index >= 5.0 ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>{selectedVillage.stress_index.toFixed(1)}</span>
                   <span className="text-xl font-medium text-slate-500 mb-1">/ 10</span>
                 </div>
               </div>
@@ -445,6 +460,17 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast-enter fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-semibold max-w-sm ${toast.type === 'success'
+            ? 'bg-emerald-900/90 border-emerald-500/40 text-emerald-200'
+            : 'bg-red-900/90 border-red-500/40 text-red-200'
+          }`}>
+          <span>{toast.msg}</span>
+          <button onClick={() => setToast(null)} className="ml-auto text-white/40 hover:text-white transition"><X size={16} /></button>
+        </div>
+      )}
 
     </div>
   );
