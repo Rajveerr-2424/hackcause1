@@ -440,17 +440,20 @@ function App() {
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="week" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.max(dataMax, 30)]} />
                       <Tooltip
                         contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
                         labelStyle={{ color: '#94a3b8' }}
                         formatter={(val, name) => [`${val} mm`, name === 'actual' ? 'Rainfall' : 'Forecast']}
                       />
                       <ReferenceLine x="W12" stroke="rgba(255,255,255,0.15)" strokeDasharray="4 4" />
-                      <Area type="monotone" dataKey="actual" stroke={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} strokeWidth={2} fill="url(#rainGrad)" dot={false} connectNulls={false} />
+                      <Area type="monotone" dataKey="actual" stroke={selectedVillage.stress_index >= 8 ? '#ef4444' : '#3b82f6'} strokeWidth={2.5} fill="url(#rainGrad)" dot={false} connectNulls={false} />
                       <Area type="monotone" dataKey="forecast" stroke={selectedVillage.stress_index >= 8 ? '#fca5a5' : '#93c5fd'} strokeWidth={2} strokeDasharray="5 4" fill="none" dot={false} connectNulls={false} />
                     </AreaChart>
                   </ResponsiveContainer>
+                )}
+                {!rainfallLoading && rainfallData.length > 0 && rainfallData.filter(d => d.actual > 0).length === 0 && (
+                  <p className="text-red-400 text-xs font-bold text-center mt-1 tracking-wide">⚠️ DROUGHT CONFIRMED — 0mm rainfall recorded across all 12 weeks</p>
                 )}
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-slate-500 text-xs">30-Day Forecast</span>
