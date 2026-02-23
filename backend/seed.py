@@ -62,6 +62,14 @@ def seed_db():
         {"name": "Visakhapatnam", "district": "Andhra Pradesh", "population": 2035000, "latitude": 17.6868, "longitude": 83.2185},
         {"name": "Kochi", "district": "Kerala", "population": 602000, "latitude": 9.9312, "longitude": 76.2673},
         {"name": "Thiruvananthapuram", "district": "Kerala", "population": 743000, "latitude": 8.5241, "longitude": 76.9366},
+
+        # High-Rainfall Regions (expected GREEN — Northeast Monsoon / Western Ghats)
+        {"name": "Cherrapunji", "district": "Meghalaya", "population": 11000, "latitude": 25.2744, "longitude": 91.7323},
+        {"name": "Mawsynram", "district": "Meghalaya", "population": 6800, "latitude": 25.2957, "longitude": 91.5830},
+        {"name": "Panaji", "district": "Goa", "population": 114000, "latitude": 15.4909, "longitude": 73.8278},
+        {"name": "Mangaluru", "district": "Karnataka", "population": 623000, "latitude": 12.9141, "longitude": 74.8560},
+        {"name": "Kozhikode", "district": "Kerala", "population": 609000, "latitude": 11.2588, "longitude": 75.7804},
+        {"name": "Port Blair", "district": "Andaman & Nicobar", "population": 100600, "latitude": 11.6234, "longitude": 92.7265},
     ]
 
     for v_data in villages_data:
